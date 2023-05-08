@@ -1,7 +1,5 @@
 from flask import Flask, request, abort
-from enum import Enum
 from typing import Optional
-from typing import Tuple
 from flask import render_template
 from flask import jsonify
 from flask_cors import CORS
@@ -76,7 +74,8 @@ def get_item(item_id: int) -> Optional[dict]:
 # GET
 @app.route('/api/get_items')
 def get_items():
-  return jsonify(clothes_db['clothes'])
+  clothes = list(filter(lambda item: item.get('is_show') == True, clothes_db['clothes']))
+  return jsonify(clothes)
 
 @app.errorhandler(404)
 def item_not_found(error):
@@ -102,7 +101,6 @@ def add_wears(): #item_id: int, num_wears: Optional[int] = 1): # -> int:
 
 # POST
 @app.route('/api/add_item', methods=['POST'])
-# @cross_origin(origin='localhost', headers=['Content-Type', 'Authorization'])
 def add_item():
   data = request.get_json()
   item_name = data.get('item_name')
@@ -118,14 +116,20 @@ def add_item():
   #     })
 
   clothing_item = ClothingItem(item_id=max(item_ids) + 1, item_name=item_name, price_bought=price_bought,
-                    company=company)
+                    company=company, is_show=True)
   json_item = clothing_item.to_jsonn()
-  clothes_db['clothes'].append(json_item)
+  clothes_db['clothes'].insert(0, json_item)
   return jsonify(json_item)
+
+# POST
+@app.route('/api/delete_item', methods=['POST'])
+def delete_item():
+  data = request.get_json()
+  item_id = data.get('item_id')
+  item = get_item(item_id)
+  item['is_show'] = False
+  return jsonify({})
+
 
 if __name__ == '__main__':
   app.run(debug=True)
-
-# TODO: 
-# FE can call get_item(), which calls BE, which calls DB before returning the actual item to FE
-# figure out how the calculation for the price_bought/num_wears is going to be done, on the FE or BE?
