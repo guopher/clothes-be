@@ -1,11 +1,13 @@
 from bson import ObjectId
-from flask import Flask, request, abort
+from flask import Flask, request, abort, make_response
 from flask import render_template
 from flask import jsonify
 from flask_cors import CORS
 from pymongo import MongoClient
 from urllib.parse import quote_plus
 from dotenv import load_dotenv, dotenv_values
+import jwt
+from datetime import datetime, timedelta
 
 from ClothingItem import ClothingItem
 
@@ -43,16 +45,103 @@ def index():
 
 #   return applicable_items[0]
 
+def local_host_encode_cookie_implementation():
+    token = 'fake_token'
+    response = make_response(jsonify({
+      'message': 'logged in successfully',
+      'token': token
+    }))
+    expires = datetime.now() + timedelta(hours=24)
+    print(f'expires: {expires}')
+    response.set_cookie(key='token', 
+                        value=token, 
+                        expires=expires, 
+                        domain='.localhost',
+                        samesite='Lax',
+                        path='/')
+    return None
+
+
+secret = 'random_secret'
+
 @app.route('/api/login', methods=['POST'])
 def login():
   data = request.get_json()
-  oauth_token = data.get('oauth_token')
-  result = users.find_one({'oauth_token': oauth_token})
+  sub = data.get('sub')
+  given_name = data.get('givenName')
+  family_name = data.get('familyName')
+  google_picture_url = data.get('picture')
+  result = users.find_one({'sub': sub})
+  payload = {
+    'sub': sub,
+    'iat': datetime.utcnow(),
+    'exp': datetime.utcnow() + timedelta(hours=24),
+  }
+  token = jwt.encode(payload=payload, key=secret, algorithm='HS256')
   if result is None:
+    # TODO: abstract this into one method to get the token
     users.insert_one({
-      'oauth_token': oauth_token,
+      'sub': sub,
+      'given_name': given_name,
+      'family_name': family_name,
+      'google_picture_url': google_picture_url,
     })
-  return jsonify({})
+    return jsonify({
+      'token': token,
+    })
+  else:
+    # TODO: update user properties if we should
+    users.update_one({'sub': sub}, {
+      "$set": {
+        'given_name': given_name,
+        'family_name': family_name,
+        'google_picture_url': google_picture_url,
+      }
+    })
+    # TODO: do verification that the token they passed in is correct
+    return jsonify({ 
+      'message': 'verify existing user not implemented yet',
+      'token': token,
+    })
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+  authorization = request.headers.get('Authorization')
+  # TODO: make this only return items that have is_show as true
+  try:
+    token = authorization.split()[1]
+    verified = jwt.decode(token, secret, algorithms=['HS256'])
+    sub = verified.get('sub')
+    result = users.find_one({'sub': sub})
+    if result is None:
+      print('user does not exist')
+      # TODO: consult online to determine what to do if invalid access token is passed in
+    else:
+      # TODO: invalid the token/expire the token
+      return jsonify({})
+  except Exception as e:
+    print(e)
+
+@app.route('/api/get_user')
+def get_user():
+  authorization = request.headers.get('Authorization')
+  # TODO: make this only return items that have is_show as true
+  try:
+    token = authorization.split()[1]
+    verified = jwt.decode(token, secret, algorithms=['HS256'])
+    sub = verified.get('sub')
+    result = users.find_one({'sub': sub})
+    if result is None:
+      print('user does not exist')
+    else:
+      return jsonify({
+        'givenName': result.get('given_name'),
+        'familyName': result.get('family_name'),
+        'google_picture_url': result.get('google_picture_url'),
+      })
+  except Exception as e:
+    print(e)
+
 
 @app.route('/api/edit_user', methods=['POST'])
 def edit_user():
@@ -77,20 +166,26 @@ def edit_user():
     print('unauthorized')
   return jsonify({})
 
-# GET
-@app.route('/api/get_items')
+@app.route('/api/get_items', methods=['POST'])
 def get_items():
+  authorization = request.headers.get('Authorization')
   # TODO: make this only return items that have is_show as true
   try:
-    cursor = collection.find({})
+    token = authorization.split()[1]
+    verified = jwt.decode(token, secret, algorithms=['HS256'])
+    sub = verified.get('sub')
+    cursor = collection.find({ 
+      'sub': sub,
+      'is_show': True,
+    })
     result = []
     for doc in cursor:
       obj_id = doc['_id']
       doc['_id'] = ObjectId.__str__(obj_id)
       result.append(doc)
+    return jsonify(result)
   except Exception as e:
     print(e)
-  return jsonify(result)
 
 @app.errorhandler(404)
 def item_not_found(error):
@@ -101,9 +196,8 @@ def item_not_found(error):
       }
     }), 404
 
-# POST
 @app.route('/api/add_wears', methods=['POST'])
-def add_wears(): #item_id: int, num_wears: Optional[int] = 1): # -> int:
+def add_wears():
   data = request.get_json()
   item_id = data.get('item_id')
   new_num_wears = data.get('new_num_wears')
@@ -122,13 +216,18 @@ def add_wears(): #item_id: int, num_wears: Optional[int] = 1): # -> int:
     print(e)
   return jsonify({})
 
-# POST
 @app.route('/api/add_item', methods=['POST'])
 def add_item():
   data = request.get_json()
   item_name = data.get('item_name')
   price_bought = data.get('price_bought')
   company = data.get('company')
+
+  authorization = request.headers.get('Authorization')
+  token = authorization.split()[1]
+  verified = jwt.decode(token, secret, algorithms=['HS256'])
+  sub = verified.get('sub')
+  # TODO: do validation on header first before executing any code
 
   # items = [obj['item_name'] for obj in clothes_db['clothes']]
   # item_ids = [obj['item_id'] for obj in clothes_db['clothes']]
@@ -138,7 +237,7 @@ def add_item():
   #     'message': 'message already exists',
   #     })
 
-  clothing_item = ClothingItem(item_name=item_name, price_bought=price_bought,
+  clothing_item = ClothingItem(sub=sub, item_name=item_name, price_bought=price_bought,
                     company=company, is_show=True)
   json_item = clothing_item.to_jsonn()
   try:

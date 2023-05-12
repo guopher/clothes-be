@@ -1,9 +1,10 @@
 from typing import Optional
 
 class ClothingItem:
-  def __init__(self, item_name: str, price_bought: int, 
+  def __init__(self, sub: str, item_name: str, price_bought: int, 
       company: Optional[str] = None, num_wears: Optional[int] = 0, is_show: Optional[bool] = True, 
       num_washes: Optional[int] = 0):
+    self.sub = sub
     self.item_name = item_name
     self.price_bought = price_bought
     self.company = company
@@ -13,6 +14,7 @@ class ClothingItem:
 
   def to_jsonn(self) -> dict:
     return {
+      "sub": self.sub,
       "item_name": self.item_name,
       "price_bought": self.price_bought,
       "company": self.company,
