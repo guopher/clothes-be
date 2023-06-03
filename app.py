@@ -30,7 +30,7 @@ users = db['users']
 
 @app.route('/')
 def index():
-  return render_template('index.html')
+  return '🥭 Hello World'
 
 # GET
 # TODO: make this an actual call to MongoDB
