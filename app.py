@@ -9,18 +9,23 @@ from urllib.parse import quote_plus
 from dotenv import load_dotenv, dotenv_values
 import jwt
 from datetime import datetime, timedelta
-
+from urllib.parse import quote_plus
 from ClothingItem import ClothingItem
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000"])
-load_dotenv()
-env_vars = dotenv_values()
+# load_dotenv()
+# env_vars = dotenv_values()
 
-db_password = quote_plus(env_vars['DB_PASSWORD'])
-db_cluster = env_vars['DB_CLUSTER']
-db_name = env_vars['DB_NAME']
-token_secret = env_vars['TOKEN_SECRET']
+# db_password = quote_plus(env_vars['DB_PASSWORD'])
+# db_cluster = env_vars['DB_CLUSTER']
+# db_name = env_vars['DB_NAME']
+# token_secret = env_vars['TOKEN_SECRET']
+
+db_password = quote_plus(os.environ['DB_PASSWORD'])
+db_cluster = quote_plus(os.environ['DB_CLUSTER'])
+db_name = quote_plus(os.environ['DB_NAME'])
+token_secret = quote_plus(os.environ['TOKEN_SECRET'])
 
 uri = f'mongodb+srv://{db_cluster}:{db_password}@{db_cluster}.9tjxmbd.mongodb.net/?retryWrites=true&w=majority'
 
