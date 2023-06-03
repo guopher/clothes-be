@@ -19,6 +19,7 @@ env_vars = dotenv_values()
 db_password = quote_plus(env_vars['DB_PASSWORD'])
 db_cluster = env_vars['DB_CLUSTER']
 db_name = env_vars['DB_NAME']
+token_secret = env_vars['TOKEN_SECRET']
 
 uri = f'mongodb+srv://{db_cluster}:{db_password}@{db_cluster}.9tjxmbd.mongodb.net/?retryWrites=true&w=majority'
 
@@ -61,8 +62,6 @@ def local_host_encode_cookie_implementation():
     return None
 
 
-secret = 'random_secret'
-
 @app.route('/api/login', methods=['POST'])
 def login():
   data = request.get_json()
@@ -76,7 +75,7 @@ def login():
     'iat': datetime.utcnow(),
     'exp': datetime.utcnow() + timedelta(hours=24),
   }
-  token = jwt.encode(payload=payload, key=secret, algorithm='HS256')
+  token = jwt.encode(payload=payload, key=token_secret, algorithm='HS256')
   if result is None:
     # TODO: abstract this into one method to get the token
     users.insert_one({
@@ -109,7 +108,7 @@ def logout():
   # TODO: make this only return items that have is_show as true
   try:
     token = authorization.split()[1]
-    verified = jwt.decode(token, secret, algorithms=['HS256'])
+    verified = jwt.decode(token, token_secret, algorithms=['HS256'])
     sub = verified.get('sub')
     result = users.find_one({'sub': sub})
     if result is None:
@@ -127,7 +126,7 @@ def get_user():
   # TODO: make this only return items that have is_show as true
   try:
     token = authorization.split()[1]
-    verified = jwt.decode(token, secret, algorithms=['HS256'])
+    verified = jwt.decode(token, token_secret, algorithms=['HS256'])
     sub = verified.get('sub')
     result = users.find_one({'sub': sub})
     if result is None:
@@ -170,7 +169,7 @@ def get_items():
   # TODO: make this only return items that have is_show as true
   try:
     token = authorization.split()[1]
-    verified = jwt.decode(token, secret, algorithms=['HS256'])
+    verified = jwt.decode(token, token_secret, algorithms=['HS256'])
     sub = verified.get('sub')
     cursor = collection.find({ 
       'sub': sub,
@@ -237,7 +236,7 @@ def add_item():
 
   authorization = request.headers.get('Authorization')
   token = authorization.split()[1]
-  verified = jwt.decode(token, secret, algorithms=['HS256'])
+  verified = jwt.decode(token, token_secret, algorithms=['HS256'])
   sub = verified.get('sub')
   # TODO: do validation on header first before executing any code
 
