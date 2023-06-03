@@ -52,7 +52,6 @@ def local_host_encode_cookie_implementation():
       'token': token
     }))
     expires = datetime.now() + timedelta(hours=24)
-    print(f'expires: {expires}')
     response.set_cookie(key='token', 
                         value=token, 
                         expires=expires, 
@@ -120,7 +119,7 @@ def logout():
       # TODO: invalid the token/expire the token
       return jsonify({})
   except Exception as e:
-    print(e)
+    return jsonify({'error': str(e)})
 
 @app.route('/api/get_user')
 def get_user():
@@ -140,8 +139,7 @@ def get_user():
         'google_picture_url': result.get('google_picture_url'),
       })
   except Exception as e:
-    print(e)
-
+    return jsonify({'error': str(e)}), 403
 
 @app.route('/api/edit_user', methods=['POST'])
 def edit_user():
@@ -185,7 +183,7 @@ def get_items():
       result.append(doc)
     return jsonify(result)
   except Exception as e:
-    print(e)
+    return jsonify({'error': str(e)}), 403
 
 @app.errorhandler(404)
 def item_not_found(error):
@@ -211,6 +209,20 @@ def add_wears():
     collection.update_one(
       filter={'_id': ObjectId(item_id)},
       update={ "$set": {"num_wears": new_num_wears}}
+    )
+  except Exception as e:
+    print(e)
+  return jsonify({})
+
+@app.route('/api/pin_item', methods=['POST'])
+def pin_item():
+  data = request.get_json()
+  item_id = data.get('item_id')
+  is_pinned = data.get('is_pinned')
+  try:
+    collection.update_one(
+      filter={'_id': ObjectId(item_id)},
+      update={ "$set": {"is_pinned": is_pinned}}
     )
   except Exception as e:
     print(e)
@@ -253,11 +265,12 @@ def add_item():
 def delete_item():
   data = request.get_json()
   item_id = data.get('item_id')
+  is_show = data.get('is_show', False)
   # item = get_item(item_id)
   try:
     collection.update_one(
       filter={'_id': ObjectId(item_id)},
-      update={ "$set": {"is_show": False}}
+      update={ "$set": {"is_show": is_show}}
     )
     return jsonify({})
   except Exception as e:
