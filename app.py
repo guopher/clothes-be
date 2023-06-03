@@ -1,3 +1,4 @@
+import os
 from bson import ObjectId
 from flask import Flask, request, abort, make_response
 from flask import render_template
@@ -278,4 +279,7 @@ def delete_item():
 
 
 if __name__ == '__main__':
-  app.run(debug=True)
+  # Use the PORT environment variable if available, or default to 5000
+  port = int(os.environ.get('PORT', 5000))
+  app.run(host='0.0.0.0', port=port, debug=True)
+  # app.run(debug=True)
