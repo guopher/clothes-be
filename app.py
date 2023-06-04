@@ -26,6 +26,7 @@ db_password = quote_plus(os.environ['DB_PASSWORD'])
 db_cluster = quote_plus(os.environ['DB_CLUSTER'])
 db_name = quote_plus(os.environ['DB_NAME'])
 token_secret = quote_plus(os.environ['TOKEN_SECRET'])
+google_client_id = quote_plus(os.environ['GOOGLE_CLIENT_ID'])
 
 uri = f'mongodb+srv://{db_cluster}:{db_password}@{db_cluster}.9tjxmbd.mongodb.net/?retryWrites=true&w=majority'
 
@@ -37,6 +38,12 @@ users = db['users']
 @app.route('/')
 def index():
   return '🥭 Hello World'
+
+@app.route('/api/config')
+def config():
+  return jsonify({
+    'googleClientId': google_client_id
+  })
 
 # GET
 # TODO: make this an actual call to MongoDB
