@@ -13,7 +13,7 @@ from urllib.parse import quote_plus
 from ClothingItem import ClothingItem
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000", 'https://guopher.github.io/clothes-fe/'])
+CORS(app, origins=['http://localhost:3000', 'https://guopher.github.io/clothes-fe/*'])
 # load_dotenv()
 # env_vars = dotenv_values()
 
