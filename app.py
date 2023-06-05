@@ -1,4 +1,5 @@
 import os
+import logging
 from bson import ObjectId
 from flask import Flask, request, abort, make_response
 from flask import render_template
@@ -246,11 +247,13 @@ def add_item():
   item_name = data.get('item_name')
   price_bought = data.get('price_bought')
   company = data.get('company')
+  logging.info(f'item_name: ${item_name}, price_bought: ${price_bought}, company: ${company}')
 
   authorization = request.headers.get('Authorization')
   token = authorization.split()[1]
   verified = jwt.decode(token, token_secret, algorithms=['HS256'])
   sub = verified.get('sub')
+  logging.info(f'sub: ${sub}')
   # TODO: do validation on header first before executing any code
 
   # items = [obj['item_name'] for obj in clothes_db['clothes']]
@@ -264,12 +267,15 @@ def add_item():
   clothing_item = ClothingItem(sub=sub, item_name=item_name, price_bought=price_bought,
                     company=company, is_show=True)
   json_item = clothing_item.to_jsonn()
+  logging.info('json_item')
+  logging.info(json_item)
   try:
     result = collection.insert_one(json_item)
     inserted_id = ObjectId.__str__(result.inserted_id)
+    logging.info(f'inserted_id: ${inserted_id}')
     return jsonify({'inserted_id': inserted_id})
   except Exception as e:
-    print(e)
+    logging.error(e)
     raise
 
 # POST
