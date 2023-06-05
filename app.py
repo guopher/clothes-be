@@ -14,6 +14,7 @@ from urllib.parse import quote_plus
 from ClothingItem import ClothingItem
 
 app = Flask(__name__)
+logger = logging.getLogger(__name__)
 CORS(app, origins=['http://localhost:3000', 'https://guopher.github.io/*'])
 # load_dotenv()
 # env_vars = dotenv_values()
@@ -247,13 +248,13 @@ def add_item():
   item_name = data.get('item_name')
   price_bought = data.get('price_bought')
   company = data.get('company')
-  logging.info(f'item_name: ${item_name}, price_bought: ${price_bought}, company: ${company}')
+  logger.info(f'item_name: ${item_name}, price_bought: ${price_bought}, company: ${company}')
 
   authorization = request.headers.get('Authorization')
   token = authorization.split()[1]
   verified = jwt.decode(token, token_secret, algorithms=['HS256'])
   sub = verified.get('sub')
-  logging.info(f'sub: ${sub}')
+  logger.info(f'sub: ${sub}')
   # TODO: do validation on header first before executing any code
 
   # items = [obj['item_name'] for obj in clothes_db['clothes']]
@@ -267,15 +268,15 @@ def add_item():
   clothing_item = ClothingItem(sub=sub, item_name=item_name, price_bought=price_bought,
                     company=company, is_show=True)
   json_item = clothing_item.to_jsonn()
-  logging.info('json_item')
-  logging.info(json_item)
+  logger.info('json_item')
+  logger.info(json_item)
   try:
     result = collection.insert_one(json_item)
     inserted_id = ObjectId.__str__(result.inserted_id)
-    logging.info(f'inserted_id: ${inserted_id}')
+    logger.info(f'inserted_id: ${inserted_id}')
     return jsonify({'inserted_id': inserted_id})
   except Exception as e:
-    logging.error(e)
+    logger.error(e)
     raise
 
 # POST
