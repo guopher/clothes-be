@@ -276,6 +276,7 @@ def add_item():
       'item_name': item_name,
       'price_bought': price_bought,
       'company': company,
+      'is_show': True,
     })
   except Exception as e:
     logger.error(e)
