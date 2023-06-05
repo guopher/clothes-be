@@ -277,6 +277,8 @@ def add_item():
       'price_bought': price_bought,
       'company': company,
       'is_show': True,
+      'num_wears': 0,
+      'num_washes': 0,
     })
   except Exception as e:
     logger.error(e)
