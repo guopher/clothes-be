@@ -25,7 +25,7 @@ CORS(app, origins=['http://localhost:3000', 'https://guopher.github.io/*'])
 # db_name = env_vars['DB_NAME']
 # token_secret = env_vars['TOKEN_SECRET']
 
-# db_password = quote_plus(os.environ['DB_PASSWORD'])
+db_password = quote_plus(os.environ['DB_PASSWORD'])
 db_agile_earth_server_password = quote_plus(os.environ['DB_MONGO_AGILE_EARTH_PASSWORD'])
 db_cluster = quote_plus(os.environ['DB_CLUSTER'])
 db_mongo_username = quote_plus(os.environ['DB_MONGO_USERNAME'])
@@ -33,7 +33,7 @@ db_name = quote_plus(os.environ['DB_NAME'])
 token_secret = quote_plus(os.environ['TOKEN_SECRET'])
 google_client_id = quote_plus(os.environ['GOOGLE_CLIENT_ID'])
 
-uri = f'mongodb+srv://{db_mongo_username}:{db_agile_earth_server_password}@{db_cluster}.9tjxmbd.mongodb.net/?retryWrites=true&w=majority'
+uri = f'mongodb+srv://{db_cluster}:{db_password}@{db_cluster}.9tjxmbd.mongodb.net/?retryWrites=true&w=majority'
 
 client = MongoClient(uri)
 db = client[db_name]
