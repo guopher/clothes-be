@@ -20,18 +20,17 @@ CORS(app, origins=['http://localhost:3000', 'https://guopher.github.io/*'])
 # load_dotenv()
 # env_vars = dotenv_values()
 
-# db_password = quote_plus(env_vars['DB_PASSWORD'])
 # db_cluster = env_vars['DB_CLUSTER']
 # db_name = env_vars['DB_NAME']
 # token_secret = env_vars['TOKEN_SECRET']
 
-db_password = quote_plus(os.environ['DB_PASSWORD'])
+db_agile_earth_server_password = quote_plus(os.environ['DB_MONGO_AGILE_EARTH_PASSWORD'])
 db_cluster = quote_plus(os.environ['DB_CLUSTER'])
 db_name = quote_plus(os.environ['DB_NAME'])
 token_secret = quote_plus(os.environ['TOKEN_SECRET'])
 google_client_id = quote_plus(os.environ['GOOGLE_CLIENT_ID'])
 
-uri = f'mongodb+srv://{db_cluster}:{db_password}@{db_cluster}.9tjxmbd.mongodb.net/?retryWrites=true&w=majority'
+uri = f'mongodb+srv://{db_cluster}:{db_agile_earth_server_password}@{db_cluster}.9tjxmbd.mongodb.net/?retryWrites=true&w=majority'
 
 client = MongoClient(uri)
 db = client[db_name]
@@ -182,7 +181,6 @@ def edit_user():
 @app.route('/api/get_items', methods=['POST'])
 def get_items():
   authorization = request.headers.get('Authorization')
-  # TODO: make this only return items that have is_show as true
   try:
     token = authorization.split()[1]
     verified = jwt.decode(token, token_secret, algorithms=['HS256'])
